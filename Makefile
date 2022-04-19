@@ -12,5 +12,11 @@ build:
 	docker-compose -f $(DOCKER_PATH)/docker-compose.$(ENV).yml build
 
 
+.PHONY: down
+down:
+	docker-compose -f $(DOCKER_PATH)/docker-compose.$(ENV).yml down \
+			--volumes \
+			--remove-orphans
+
 .DEFAULT_GOAL := run
 
