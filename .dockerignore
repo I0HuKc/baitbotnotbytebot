@@ -1,4 +1,7 @@
+.vscode
 Makefile
 .gitignore
 LICENSE
 docker
+/*.sql
+.env.example

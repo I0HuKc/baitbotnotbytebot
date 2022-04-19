@@ -26,7 +26,6 @@ func (b *baitbot) Serve() (err error) {
 	}
 
 	for update := range updates {
-
 		if update.Message.Chat.IsGroup() {
 			if update.Message.IsCommand() {
 				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
@@ -39,7 +38,6 @@ func (b *baitbot) Serve() (err error) {
 				}
 
 				if update.Message.Text == core.ChangeDesc {
-
 					act := tgbotapi.NewChatDescription(update.Message.Chat.ID, "Test dgfg ghh sdfgh fggh")
 					if _, err := b.botApi.Send(act); err != nil {
 						fmt.Println(err)
@@ -54,20 +52,6 @@ func (b *baitbot) Serve() (err error) {
 				continue
 			}
 		}
-
-		// if update.Message.Text == core.Start {
-		// 	fmt.Println(update.Message.Chat.IsGroup())
-		// }
-
-		// if update.Message != nil {
-		// 	log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-		// 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		// 	msg.ReplyToMessageID = update.Message.MessageID
-
-		// 	b.botApi.Send(msg)
-		// 	continue
-		// }
 	}
 
 	return nil
