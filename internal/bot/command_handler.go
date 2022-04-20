@@ -103,7 +103,7 @@ func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update)
 	// Обработка команды /ad
 	case core.CommandAddDesc.GetName():
 		if ok, err := b.IsAuthor(update); !ok {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не велено тебя пускать")
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не велено тебя сюда пускать")
 			b.Send(b.botApi.Send, msg)
 
 			return err
@@ -143,6 +143,27 @@ func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update)
 		}
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, desc.Text)
+		return b.Send(b.botApi.Send, msg)
+
+	case core.CommandGetAllDesc.GetName():
+		if ok, err := b.IsAdmin(update); !ok {
+			return err
+		}
+
+		// Получение всех записей
+		arr, err := b.store.Desc().List(ctx)
+		if err != nil {
+			return err
+		}
+
+		// Подготовка сообщения
+		var mtext string
+		for _, d := range arr {
+			mtext += fmt.Sprintf("*%d*. %s\n\n", d.Id, d.Text)
+		}
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, mtext)
+		msg.ParseMode = tgbotapi.ModeMarkdown
 		return b.Send(b.botApi.Send, msg)
 
 	case core.CommandHelp.GetName():

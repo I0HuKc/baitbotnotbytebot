@@ -70,6 +70,11 @@ var (
 		private: true,
 	}
 
+	CommandGetAllDesc = command{
+		name:    "gad",
+		private: true,
+	}
+
 	CommandHelp = command{
 		name:    "help",
 		private: true,
