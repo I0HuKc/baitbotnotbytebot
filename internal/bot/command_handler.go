@@ -23,6 +23,13 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 
 	// Обработка команды /scd
 	case core.CommandStatChangeDesc.GetName():
+		if ok, err := b.IsAdmin(update); !ok {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ты не Егор")
+			b.botApi.Send(msg)
+
+			return err
+		}
+
 		go func() {
 			for {
 				rand.Seed(time.Now().UnixNano())
@@ -73,7 +80,6 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 
 				b.AdminNotify(fmt.Sprintf("Сделующая смена статуса через *%dc*", interval))
 				time.Sleep(time.Duration(interval) * time.Second)
-
 			}
 		}()
 
