@@ -9,6 +9,14 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+func (b *baitbot) IsLocal() bool {
+	if os.Getenv("APP_ENV") == "local" {
+		return true
+	}
+
+	return false
+}
+
 // Вспомогательная функция, чтобы после отправки
 // сообщения получить только ошибку без лишней информации
 func (b *baitbot) Send(send func(c tgbotapi.Chattable) (tgbotapi.Message, error), msg tgbotapi.Chattable) error {
@@ -23,7 +31,9 @@ func (b *baitbot) AdminNotify(about string) error {
 		return err
 	}
 
-	return b.Send(b.botApi.Send, tgbotapi.NewMessage(int64(id), about))
+	msg := tgbotapi.NewMessage(int64(id), about)
+	msg.ParseMode = tgbotapi.ModeMarkdown
+	return b.Send(b.botApi.Send, msg)
 }
 
 // Проверка на админа

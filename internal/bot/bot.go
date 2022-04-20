@@ -27,14 +27,18 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 	for update := range updates {
 		if update.Message.Chat.IsGroup() {
 			if update.Message.IsCommand() {
-				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+				if b.IsLocal() {
+					log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+				}
 
 				b.ErrorHandler(ctx, b.GroupCmdHandler, update)
 			}
 		}
 
 		if update.Message.Chat.IsPrivate() {
-			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+			if b.IsLocal() {
+				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+			}
 
 			if update.Message.IsCommand() {
 				b.ErrorHandler(ctx, b.PrivateCmdHandler, update)

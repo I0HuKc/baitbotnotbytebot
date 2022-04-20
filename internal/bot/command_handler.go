@@ -63,9 +63,17 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 				}
 
 				// Рандомный интервал через который будет установлен новый статус
-				// in := rand.Intn(24-1+1) + 1
+				interval := rand.Intn(48-24+24) + 24
 
-				time.Sleep(10 * time.Second)
+				if !b.IsLocal() {
+					b.AdminNotify(fmt.Sprintf("Сделующая смена статуса через *%dч*", interval))
+					time.Sleep(time.Duration(interval) * time.Hour)
+					return
+				}
+
+				b.AdminNotify(fmt.Sprintf("Сделующая смена статуса через *%dc*", interval))
+				time.Sleep(time.Duration(interval) * time.Second)
+
 			}
 		}()
 
