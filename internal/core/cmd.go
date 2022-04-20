@@ -75,6 +75,11 @@ var (
 		private: true,
 	}
 
+	CommandPing = command{
+		name:    "ping",
+		private: false,
+	}
+
 	CommandHelp = command{
 		name:    "help",
 		private: true,

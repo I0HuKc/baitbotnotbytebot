@@ -25,7 +25,7 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 	}
 
 	for update := range updates {
-		if update.Message.Chat.IsGroup() {
+		if update.Message.Chat.IsGroup() || update.Message.Chat.IsSuperGroup() {
 			if update.Message.IsCommand() {
 				if b.IsLocal() {
 					log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)

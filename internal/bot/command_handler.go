@@ -15,9 +15,12 @@ import (
 
 func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) error {
 	switch update.Message.Command() {
+	case core.CommandPing.GetName():
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
+		return b.Send(b.botApi.Send, msg)
+
 	// Обработка команды /bll
 	case core.CommandBullying.GetName():
-		fmt.Println(update.Message.Chat.ID)
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Сорян, я еще не умею буллить :(")
 		return b.Send(b.botApi.Send, msg)
 
