@@ -1,28 +1,27 @@
 package baitbot
 
 import (
+	"context"
 	"fmt"
 	"log"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
+	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type baitbot struct {
 	botApi *tgbotapi.BotAPI
+	store  db.SqlStoreI
 }
 
-type BaitbotI interface {
-	Serve() (err error)
-}
-
-func (b *baitbot) Serve() (err error) {
+func (b *baitbot) Serve(ctx context.Context) (err error) {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
 	updates := b.botApi.GetUpdatesChan(u)
 	if err != nil {
-		return
+		return err
 	}
 
 	for update := range updates {
@@ -30,26 +29,15 @@ func (b *baitbot) Serve() (err error) {
 			if update.Message.IsCommand() {
 				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 
-				if update.Message.Text == core.Bullying {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Сорян, я еще не умею буллить :(")
-					b.botApi.Send(msg)
-
-					continue
-				}
-
-				if update.Message.Text == core.ChangeDesc {
-					act := tgbotapi.NewChatDescription(update.Message.Chat.ID, "Test dgfg ghh sdfgh fggh")
-					if _, err := b.botApi.Send(act); err != nil {
-						fmt.Println(err)
-					}
-				}
+				b.ErrorHandler(ctx, b.GroupCmdHandler, update)
 			}
 		}
 
 		if update.Message.Chat.IsPrivate() {
+			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
+
 			if update.Message.IsCommand() {
-				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-				continue
+				b.ErrorHandler(ctx, b.PrivateCmdHandler, update)
 			}
 		}
 	}
@@ -57,8 +45,27 @@ func (b *baitbot) Serve() (err error) {
 	return nil
 }
 
-func CreateBaitbot(botApi *tgbotapi.BotAPI) BaitbotI {
+func (b *baitbot) ErrorHandler(ctx context.Context, handler core.Handler, update tgbotapi.Update) {
+	// ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	// defer cancel()
+
+	if err := handler(ctx, update); err != nil {
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "⚠️ Похоже что-то пошло не так ⚠️ ")
+		b.botApi.Send(msg)
+
+		fmt.Println(ctx.Err() != context.Canceled)
+		if ctx.Err() != context.Canceled {
+			ab := fmt.Sprintf("[%s] — %s", update.Message.Chat.UserName, err.Error())
+			if err := b.AdminNotify(ab); err != nil {
+				log.Println(err)
+			}
+		}
+	}
+}
+
+func CreateBaitbot(b *tgbotapi.BotAPI, s db.SqlStoreI) core.Baitbot {
 	return &baitbot{
-		botApi: botApi,
+		botApi: b,
+		store:  s,
 	}
 }

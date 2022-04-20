@@ -1,0 +1,129 @@
+package baitbot
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"math/rand"
+	"strconv"
+	"time"
+
+	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
+	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) error {
+	switch update.Message.Command() {
+	// Обработка команды /bll
+	case core.CommandBullying.GetName():
+		fmt.Println(update.Message.Chat.ID)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Сорян, я еще не умею буллить :(")
+		return b.Send(b.botApi.Send, msg)
+
+	// Обработка команды /scd
+	case core.CommandStatChangeDesc.GetName():
+		go func() {
+			for {
+				rand.Seed(time.Now().UnixNano())
+
+				// Получение ID первой и последней записи из БД
+				min, max, err := b.store.Desc().FistLast(ctx)
+				if err != nil {
+					b.AdminNotify(err.Error())
+				}
+
+				if min < 1 {
+					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Строки закончились :)")
+					b.botApi.Send(msg)
+					break
+				}
+
+				// Достаю случайную запись из БД, в рамках допустимого диапазона
+				d := model.Desc{Id: rand.Intn(max-min+1) + min}
+				if err := b.store.Desc().Get(ctx, &d); err != nil {
+					if err != sql.ErrNoRows {
+						b.AdminNotify(err.Error())
+					}
+
+					return
+				}
+
+				// Устанавливаю новое описание
+				act := tgbotapi.NewChatDescription(update.Message.Chat.ID, d.Text)
+				b.botApi.Send(act)
+
+				// Отправляю уведомление о том, что новое описание установлено
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Он волен взять и поменять строку и с ней смысл темы всей!")
+				b.botApi.Send(msg)
+
+				// Удаляю установленный статус (чтобы он больше никогда не повторился)
+				if err := b.store.Desc().Delete(ctx, &d); err != nil {
+					b.AdminNotify(err.Error())
+				}
+
+				// Рандомный интервал через который будет установлен новый статус
+				// in := rand.Intn(24-1+1) + 1
+
+				time.Sleep(10 * time.Second)
+			}
+		}()
+
+		return nil
+	default:
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Данная команда не поддерживается :(")
+		return b.Send(b.botApi.Send, msg)
+	}
+}
+
+func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update) error {
+	switch update.Message.Command() {
+
+	// Обработка команды /start
+	case core.CommandStart.GetName():
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Зачем вообще нужно приветствие? Сразу к делу!")
+		return b.Send(b.botApi.Send, msg)
+
+	// Обработка команды /ad
+	case core.CommandAddDesc.GetName():
+		if ok, err := b.IsAdmin(update); !ok {
+			return err
+		}
+
+		if msg, err := b.CommandFlagValidation(update); err != nil {
+			return b.Send(b.botApi.Send, msg)
+		}
+
+		if err := b.store.Desc().Create(ctx, &model.Desc{
+			Text: b.TrimFlagCommandValue("-v", update.Message.Text),
+		}); err != nil {
+			return err
+		}
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Статус успешно добавлен.")
+		return b.Send(b.botApi.Send, msg)
+
+	// Обработка команды /gd
+	case core.CommandGetDesc.GetName():
+		if msg, err := b.CommandFlagValidation(update); err != nil {
+			return b.Send(b.botApi.Send, msg)
+		}
+
+		id, err := strconv.Atoi(b.TrimFlagCommandValue("-id", update.Message.Text))
+		if err != nil {
+			return err
+		}
+
+		desc := model.Desc{Id: id}
+		if err := b.store.Desc().Get(ctx, &desc); err != nil {
+			return err
+		}
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, desc.Text)
+		return b.Send(b.botApi.Send, msg)
+
+	default:
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Данная команда не поддерживается :(")
+		return b.Send(b.botApi.Send, msg)
+	}
+}
