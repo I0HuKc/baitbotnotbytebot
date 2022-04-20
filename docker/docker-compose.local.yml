@@ -6,8 +6,6 @@ services:
       dockerfile: docker/Dockerfile
       context: ../
     command: run
-    environment:
-      - APP_ENV=local
     env_file:
         - ../.env
     depends_on:
