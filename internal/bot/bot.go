@@ -59,7 +59,7 @@ func (b *baitbot) ErrorHandler(ctx context.Context, handler core.Handler, update
 
 		fmt.Println(ctx.Err() != context.Canceled)
 		if ctx.Err() != context.Canceled {
-			ab := fmt.Sprintf("[%s] — %s", update.Message.Chat.UserName, err.Error())
+			ab := fmt.Sprintf("🔄[%s] — %s🔄", update.Message.Chat.UserName, err.Error())
 			if err := b.AdminNotify(ab); err != nil {
 				log.Println(err)
 			}

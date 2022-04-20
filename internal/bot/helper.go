@@ -1,6 +1,7 @@
 package baitbot
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -8,6 +9,20 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+var helpInfo string = `
+/start — перезапуск бота (локальный).
+
+*Групповые команды*
+/scd — старт процесса смены описания
+/bll — начать буллить человека
+/cd — принудительное изменение статуса в группе
+
+*Приватные команды*
+/ad -v <value> — добавить статус (for Authors)
+/gd -id <recordid> — получить статус (for Admins).
+/help — получить эту инструкцию.
+`
 
 func (b *baitbot) IsLocal() bool {
 	if os.Getenv("APP_ENV") == "local" {
@@ -34,6 +49,21 @@ func (b *baitbot) AdminNotify(about string) error {
 	msg := tgbotapi.NewMessage(int64(id), about)
 	msg.ParseMode = tgbotapi.ModeMarkdown
 	return b.Send(b.botApi.Send, msg)
+}
+
+func (b *baitbot) IsAuthor(update tgbotapi.Update) (bool, error) {
+	for _, v := range strings.Split(os.Getenv("APP_BOT_AUTHOR"), ",") {
+		id, err := strconv.Atoi(v)
+		if err != nil {
+			return false, err
+		}
+
+		if update.Message.From.ID == int64(id) {
+			return true, nil
+		}
+	}
+
+	return false, errors.New("попытка доступа к защищенному ресурсу")
 }
 
 // Проверка на админа

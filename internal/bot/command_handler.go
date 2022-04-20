@@ -89,12 +89,17 @@ func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update)
 
 	// Обработка команды /start
 	case core.CommandStart.GetName():
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Зачем вообще нужно приветствие? Сразу к делу!")
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
+			fmt.Sprintf("Зачем вообще нужно приветствие? Сразу к делу!\n%s", helpInfo))
+		msg.ParseMode = tgbotapi.ModeMarkdown
 		return b.Send(b.botApi.Send, msg)
 
 	// Обработка команды /ad
 	case core.CommandAddDesc.GetName():
-		if ok, err := b.IsAdmin(update); !ok {
+		if ok, err := b.IsAuthor(update); !ok {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не велено тебя пускать")
+			b.Send(b.botApi.Send, msg)
+
 			return err
 		}
 
@@ -113,6 +118,10 @@ func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update)
 
 	// Обработка команды /gd
 	case core.CommandGetDesc.GetName():
+		if ok, err := b.IsAdmin(update); !ok {
+			return err
+		}
+
 		if msg, err := b.CommandFlagValidation(update); err != nil {
 			return b.Send(b.botApi.Send, msg)
 		}
@@ -128,6 +137,11 @@ func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update)
 		}
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, desc.Text)
+		return b.Send(b.botApi.Send, msg)
+
+	case core.CommandHelp.GetName():
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, helpInfo)
+		msg.ParseMode = tgbotapi.ModeMarkdown
 		return b.Send(b.botApi.Send, msg)
 
 	default:
