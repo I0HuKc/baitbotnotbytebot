@@ -1,0 +1,32 @@
+joker: 
+  targets:
+    evilinsult: 
+      name: evilinsult
+      target: https://evilinsult.com/generate_insult.php?lang=ru&type=json
+      id: 
+        field: number
+        type: str
+      read: 
+        - insult
+      translate: false
+
+    jokeapi_single:
+      name: jokeapi_single
+      target: https://v2.jokeapi.dev/joke/Any?type=single   
+      id: 
+        field: id
+        type: int
+      read: 
+        - joke
+      translate: true
+
+    jokeapi_twopart:
+      name: jokeapi_twopart
+      target: https://v2.jokeapi.dev/joke/Any?type=twopart
+      id: 
+        field: id
+        type: int  
+      read:
+        - setup
+        - delivery
+      translate: true
