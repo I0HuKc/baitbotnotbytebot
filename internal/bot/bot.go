@@ -5,14 +5,18 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/I0HuKc/baitbotnotbytebot/internal/bot/joker"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
+	"github.com/I0HuKc/baitbotnotbytebot/internal/db/rdstore"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 type baitbot struct {
 	botApi *tgbotapi.BotAPI
-	store  db.SqlStoreI
+	store  db.SqlStore
+	redis  rdstore.RedisStore
+	joker  joker.Joker
 }
 
 func (b *baitbot) Serve(ctx context.Context) (err error) {
@@ -50,9 +54,6 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 }
 
 func (b *baitbot) ErrorHandler(ctx context.Context, handler core.Handler, update tgbotapi.Update) {
-	// ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	// defer cancel()
-
 	if err := handler(ctx, update); err != nil {
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "⚠️ Похоже что-то пошло не так ⚠️ ")
 		b.botApi.Send(msg)
@@ -67,9 +68,11 @@ func (b *baitbot) ErrorHandler(ctx context.Context, handler core.Handler, update
 	}
 }
 
-func CreateBaitbot(b *tgbotapi.BotAPI, s db.SqlStoreI) core.Baitbot {
+func CreateBaitbot(b *tgbotapi.BotAPI, s db.SqlStore, r rdstore.RedisStore, j joker.Joker) core.Baitbot {
 	return &baitbot{
 		botApi: b,
 		store:  s,
+		redis:  r,
+		joker:  j,
 	}
 }

@@ -10,7 +10,9 @@ import (
 	"os"
 
 	bb "github.com/I0HuKc/baitbotnotbytebot/internal/bot"
+	"github.com/I0HuKc/baitbotnotbytebot/internal/bot/joker"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
+	"github.com/I0HuKc/baitbotnotbytebot/internal/db/rdstore"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db/sqlstore"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/spf13/cobra"
@@ -24,7 +26,7 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 
-		bot, err := tgbotapi.NewBotAPI(os.Getenv("APP_BOT_TOKEN"))
+		botApi, err := tgbotapi.NewBotAPI(os.Getenv("APP_BOT_TOKEN"))
 		if err != nil {
 			log.Panic(err)
 		}
@@ -35,7 +37,21 @@ var runCmd = &cobra.Command{
 		}
 		defer pg.Close()
 
-		baitbot := bb.CreateBaitbot(bot, sqlstore.CreateSqlStore(pg))
+		rclient, err := rdstore.NewClient(ctx)
+		if err != nil {
+			log.Panic(err)
+		}
+		defer rclient.Close()
+
+		rstore := rdstore.CreateRedisStore(rclient)
+
+		var js joker.JSchema
+		if err := js.ParseSchema(os.Getenv("JOKER_SCHEMA_PATH")); err != nil {
+			log.Panic(err)
+		}
+
+		baitbot := bb.CreateBaitbot(botApi, sqlstore.CreateSqlStore(pg),
+			rstore, joker.CallJoker(js, rstore))
 		if err := baitbot.Serve(ctx); err != nil {
 			log.Println(err)
 		}

@@ -15,6 +15,18 @@ import (
 
 func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) error {
 	switch update.Message.Command() {
+
+	case core.CommandGetEvilinsultJoke.GetName():
+		joke, err := b.joker.Joke(ctx)
+		if err != nil {
+			return err
+		}
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.joker.FormatJoke(joke))
+		msg.ParseMode = tgbotapi.ModeMarkdown
+		return b.Send(b.botApi.Send, msg)
+
+	// Обработка команды /ping
 	case core.CommandPing.GetName():
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
 		return b.Send(b.botApi.Send, msg)

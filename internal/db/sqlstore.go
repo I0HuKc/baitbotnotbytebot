@@ -1,5 +1,5 @@
 package db
 
-type SqlStoreI interface {
+type SqlStore interface {
 	Desc() DescRepositoryI
 }

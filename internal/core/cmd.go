@@ -70,11 +70,13 @@ var (
 		private: true,
 	}
 
+	// Получить все описания из БД
 	CommandGetAllDesc = command{
 		name:    "gad",
 		private: true,
 	}
 
+	// Проверить, работает ли бот
 	CommandPing = command{
 		name:    "ping",
 		private: false,
@@ -83,5 +85,10 @@ var (
 	CommandHelp = command{
 		name:    "help",
 		private: true,
+	}
+
+	CommandGetEvilinsultJoke = command{
+		name:    "eviljoke",
+		private: false,
 	}
 )

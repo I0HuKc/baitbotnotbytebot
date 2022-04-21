@@ -21,7 +21,7 @@ func (s *Store) Desc() db.DescRepositoryI {
 	return s.descRepository
 }
 
-func CreateSqlStore(db *sql.DB) db.SqlStoreI {
+func CreateSqlStore(db *sql.DB) db.SqlStore {
 	return &Store{
 		db: db,
 	}
