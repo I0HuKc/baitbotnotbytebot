@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -23,6 +24,37 @@ var helpInfo string = `
 /gd -id <recordid> — получить статус (for Admins).
 /help — получить эту инструкцию.
 `
+
+func (b *baitbot) formatJoke(joke *model.Joke) string {
+	if joke.Delivery != "" {
+		return fmt.Sprintf("%s\n\n||%s||", joke.Setup, joke.Delivery)
+	}
+
+	return joke.Setup
+}
+
+func (b *baitbot) messageEscapeFormat(str string) string {
+	str = strings.Replace(str, ".", `\.`, -1)
+	str = strings.Replace(str, ",", `\,`, -1)
+	str = strings.Replace(str, "!", `\!`, -1)
+	str = strings.Replace(str, "?", `\?`, -1)
+	str = strings.Replace(str, "[", `\[`, -1)
+	str = strings.Replace(str, "]", `\]`, -1)
+	str = strings.Replace(str, "-", `\-`, -1)
+	str = strings.Replace(str, "=", `\=`, -1)
+	str = strings.Replace(str, "+", `\+`, -1)
+	str = strings.Replace(str, ";", `\;`, -1)
+	str = strings.Replace(str, ":", `\:`, -1)
+	str = strings.Replace(str, "'", `\'`, -1)
+	str = strings.Replace(str, ")", `\)`, -1)
+	str = strings.Replace(str, "(", `\(`, -1)
+	str = strings.Replace(str, "*", `\*`, -1)
+	str = strings.Replace(str, "^", `\^`, -1)
+	str = strings.Replace(str, ">", `\>`, -1)
+	str = strings.Replace(str, "<", `\<`, -1)
+
+	return str
+}
 
 func (b *baitbot) IsLocal() bool {
 	if os.Getenv("APP_ENV") == "local" {

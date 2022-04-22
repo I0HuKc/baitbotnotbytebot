@@ -10,20 +10,100 @@ import (
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
+	gt "github.com/bas24/googletranslatefree"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) error {
 	switch update.Message.Command() {
 
-	case core.CommandGetEvilinsultJoke.GetName():
+	case core.CommandStropAntre.GetName():
+		if ok, err := b.IsAdmin(update); !ok {
+			msg := tgbotapi.NewMessage(
+				update.Message.Chat.ID,
+				fmt.Sprintf("Как же %s ты хитёр", update.Message.Chat.FirstName),
+			)
+			b.botApi.Send(msg)
+
+			return err
+		}
+
+		b.antre <- true
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Я вне игры!")
+		return b.Send(b.botApi.Send, msg)
+
+	case core.CommandAntre.GetName():
+
+		if ok, err := b.IsAdmin(update); !ok {
+			msg := tgbotapi.NewMessage(
+				update.Message.Chat.ID,
+				fmt.Sprintf("Как же %s ты хитёр", update.Message.Chat.FirstName),
+			)
+			b.botApi.Send(msg)
+
+			return err
+		}
+
+		b.antre = make(chan bool)
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Джокер в игре!")
+		if err := b.Send(b.botApi.Send, msg); err != nil {
+			return err
+		}
+
+		go func(ctx context.Context) {
+			for {
+				select {
+				case <-b.antre:
+					return
+				default:
+					fmt.Println(1)
+				}
+
+				joke, err := b.joker.Joke(ctx)
+				if err != nil {
+					b.AdminNotify(err.Error())
+				}
+
+				jtext := b.formatJoke(joke)
+				if joke.Lang.Translate {
+					jtext, err = gt.Translate(jtext, joke.Lang.Source, joke.Lang.Target)
+					if err != nil {
+						b.AdminNotify(err.Error())
+					}
+				}
+
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.messageEscapeFormat(jtext))
+				msg.ParseMode = "MarkdownV2"
+				b.Send(b.botApi.Send, msg)
+
+				interval := rand.Intn(48-24+24) + 24
+				fmt.Println(interval)
+				time.Sleep(time.Duration(5) * time.Second)
+			}
+
+		}(ctx)
+
+		return nil
+
+	// Разовая шутка
+	case core.CommandJoke.GetName():
 		joke, err := b.joker.Joke(ctx)
 		if err != nil {
 			return err
 		}
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.joker.FormatJoke(joke))
-		msg.ParseMode = tgbotapi.ModeMarkdown
+		jtext := b.formatJoke(joke)
+		if joke.Lang.Translate {
+			jtext, err = gt.Translate(jtext, joke.Lang.Source, joke.Lang.Target)
+			if err != nil {
+				return err
+			}
+		}
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.messageEscapeFormat(jtext))
+		msg.ParseMode = "MarkdownV2"
 		return b.Send(b.botApi.Send, msg)
 
 	// Обработка команды /ping
@@ -39,7 +119,10 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 	// Обработка команды /scd
 	case core.CommandStatChangeDesc.GetName():
 		if ok, err := b.IsAdmin(update); !ok {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ты не Егор")
+			msg := tgbotapi.NewMessage(
+				update.Message.Chat.ID,
+				fmt.Sprintf("Как же %s ты хитёр", update.Message.Chat.FirstName),
+			)
 			b.botApi.Send(msg)
 
 			return err

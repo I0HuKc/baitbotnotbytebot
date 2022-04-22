@@ -10,10 +10,10 @@ import (
 	"os"
 
 	bb "github.com/I0HuKc/baitbotnotbytebot/internal/bot"
-	"github.com/I0HuKc/baitbotnotbytebot/internal/bot/joker"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db/rdstore"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db/sqlstore"
+	"github.com/I0HuKc/baitbotnotbytebot/pkg/joker"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/spf13/cobra"
 )

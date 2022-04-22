@@ -46,6 +46,16 @@ var (
 		private: false,
 	}
 
+	CommandAntre = command{
+		name:    "antre",
+		private: false,
+	}
+
+	CommandStropAntre = command{
+		name:    "sa",
+		private: false,
+	}
+
 	// Начать буллить человека
 	CommandBullying = command{
 		name:    "bll",
@@ -87,8 +97,8 @@ var (
 		private: true,
 	}
 
-	CommandGetEvilinsultJoke = command{
-		name:    "eviljoke",
+	CommandJoke = command{
+		name:    "joke",
 		private: false,
 	}
 )

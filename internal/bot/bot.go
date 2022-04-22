@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/I0HuKc/baitbotnotbytebot/internal/bot/joker"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db/rdstore"
+	"github.com/I0HuKc/baitbotnotbytebot/pkg/joker"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -17,6 +17,9 @@ type baitbot struct {
 	store  db.SqlStore
 	redis  rdstore.RedisStore
 	joker  joker.Joker
+
+	antre chan bool
+	scd   chan bool
 }
 
 func (b *baitbot) Serve(ctx context.Context) (err error) {
