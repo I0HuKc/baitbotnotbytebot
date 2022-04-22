@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
@@ -17,6 +16,9 @@ import (
 func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) error {
 	switch update.Message.Command() {
 
+	/*
+		/sa
+	*/
 	case core.CommandStropAntre.GetName():
 		if ok, err := b.IsAdmin(update); !ok {
 			msg := tgbotapi.NewMessage(
@@ -33,8 +35,10 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Я вне игры!")
 		return b.Send(b.botApi.Send, msg)
 
+	/*
+		/antre
+	*/
 	case core.CommandAntre.GetName():
-
 		if ok, err := b.IsAdmin(update); !ok {
 			msg := tgbotapi.NewMessage(
 				update.Message.Chat.ID,
@@ -78,16 +82,25 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 				msg.ParseMode = "MarkdownV2"
 				b.Send(b.botApi.Send, msg)
 
-				interval := rand.Intn(48-24+24) + 24
-				fmt.Println(interval)
-				time.Sleep(time.Duration(5) * time.Second)
+				interval := rand.Intn(5-1+1) + 1
+
+				if !b.IsLocal() {
+					b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dч*", interval))
+					time.Sleep(time.Duration(interval) * time.Hour)
+					return
+				}
+
+				b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dc*", interval))
+				time.Sleep(time.Duration(interval) * time.Second)
 			}
 
 		}(ctx)
 
 		return nil
 
-	// Разовая шутка
+	/*
+		/joke
+	*/
 	case core.CommandJoke.GetName():
 		joke, err := b.joker.Joke(ctx)
 		if err != nil {
@@ -106,17 +119,23 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 		msg.ParseMode = "MarkdownV2"
 		return b.Send(b.botApi.Send, msg)
 
-	// Обработка команды /ping
+	/*
+		/ping
+	*/
 	case core.CommandPing.GetName():
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "pong")
 		return b.Send(b.botApi.Send, msg)
 
-	// Обработка команды /bll
+	/*
+		/bll
+	*/
 	case core.CommandBullying.GetName():
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Сорян, я еще не умею буллить :(")
 		return b.Send(b.botApi.Send, msg)
 
-	// Обработка команды /scd
+	/*
+		/scd
+	*/
 	case core.CommandStatChangeDesc.GetName():
 		if ok, err := b.IsAdmin(update); !ok {
 			msg := tgbotapi.NewMessage(
@@ -182,93 +201,6 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 		}()
 
 		return nil
-	default:
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Данная команда не поддерживается :(")
-		return b.Send(b.botApi.Send, msg)
-	}
-}
-
-func (b *baitbot) PrivateCmdHandler(ctx context.Context, update tgbotapi.Update) error {
-	switch update.Message.Command() {
-
-	// Обработка команды /start
-	case core.CommandStart.GetName():
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID,
-			fmt.Sprintf("Зачем вообще нужно приветствие? Сразу к делу!\n%s", helpInfo))
-		msg.ParseMode = tgbotapi.ModeMarkdown
-		return b.Send(b.botApi.Send, msg)
-
-	// Обработка команды /ad
-	case core.CommandAddDesc.GetName():
-		if ok, err := b.IsAuthor(update); !ok {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не велено тебя сюда пускать")
-			b.Send(b.botApi.Send, msg)
-
-			return err
-		}
-
-		if msg, err := b.CommandFlagValidation(update); err != nil {
-			return b.Send(b.botApi.Send, msg)
-		}
-
-		if err := b.store.Desc().Create(ctx, &model.Desc{
-			Text: b.TrimFlagCommandValue("-v", update.Message.Text),
-		}); err != nil {
-			return err
-		}
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Статус успешно добавлен.")
-		return b.Send(b.botApi.Send, msg)
-
-	// Обработка команды /gd
-	case core.CommandGetDesc.GetName():
-		if ok, err := b.IsAdmin(update); !ok {
-			return err
-		}
-
-		if msg, err := b.CommandFlagValidation(update); err != nil {
-			return b.Send(b.botApi.Send, msg)
-		}
-
-		id, err := strconv.Atoi(b.TrimFlagCommandValue("-id", update.Message.Text))
-		if err != nil {
-			return err
-		}
-
-		desc := model.Desc{Id: id}
-		if err := b.store.Desc().Get(ctx, &desc); err != nil {
-			return err
-		}
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, desc.Text)
-		return b.Send(b.botApi.Send, msg)
-
-	case core.CommandGetAllDesc.GetName():
-		if ok, err := b.IsAdmin(update); !ok {
-			return err
-		}
-
-		// Получение всех записей
-		arr, err := b.store.Desc().List(ctx)
-		if err != nil {
-			return err
-		}
-
-		// Подготовка сообщения
-		var mtext string
-		for _, d := range arr {
-			mtext += fmt.Sprintf("*%d*. %s\n\n", d.Id, d.Text)
-		}
-
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, mtext)
-		msg.ParseMode = tgbotapi.ModeMarkdown
-		return b.Send(b.botApi.Send, msg)
-
-	case core.CommandHelp.GetName():
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, helpInfo)
-		msg.ParseMode = tgbotapi.ModeMarkdown
-		return b.Send(b.botApi.Send, msg)
-
 	default:
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Данная команда не поддерживается :(")
 		return b.Send(b.botApi.Send, msg)

@@ -1,7 +1,7 @@
 joker: 
   targets:
-    evilinsult: 
-      name: evilinsult
+    evilinsult_ru: 
+      name: evilinsult_ru
       target: https://evilinsult.com/generate_insult.php?lang=ru&type=json
       id: 
         save: false
@@ -11,6 +11,18 @@ joker:
         - insult
       lang:       
         translate: false
+
+    evilinsult_en: 
+      name: evilinsult_en
+      target: https://evilinsult.com/generate_insult.php?lang=en&type=json
+      id: 
+        save: true
+        field: number
+        type: str
+      read: 
+        - insult
+      lang:       
+        translate: true
 
     jokeapi_single:
       name: jokeapi_single
