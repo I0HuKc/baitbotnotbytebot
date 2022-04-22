@@ -4,29 +4,39 @@ joker:
       name: evilinsult
       target: https://evilinsult.com/generate_insult.php?lang=ru&type=json
       id: 
+        save: false
         field: number
         type: str
       read: 
         - insult
-      translate: false
+      lang:       
+        translate: false
 
     jokeapi_single:
       name: jokeapi_single
       target: https://v2.jokeapi.dev/joke/Any?type=single   
       id: 
+        save: true
         field: id
         type: int
       read: 
         - joke
-      translate: true
+      lang:      
+        source: en
+        target: ru 
+        translate: true
 
     jokeapi_twopart:
       name: jokeapi_twopart
       target: https://v2.jokeapi.dev/joke/Any?type=twopart
       id: 
+        save: true
         field: id
         type: int  
       read:
         - setup
         - delivery
-      translate: true
+      lang:      
+        source: en
+        target: ru 
+        translate: true
