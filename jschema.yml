@@ -2,7 +2,12 @@ joker:
   targets:
     evilinsult_ru: 
       name: evilinsult_ru
-      target: https://evilinsult.com/generate_insult.php?lang=ru&type=json
+      source:
+        method: GET
+        params:
+          - lang: ru
+          - type: json          
+        target: https://evilinsult.com/generate_insult.php?lang=ru&type=json
       id: 
         save: false
         field: number
@@ -14,7 +19,12 @@ joker:
 
     evilinsult_en: 
       name: evilinsult_en
-      target: https://evilinsult.com/generate_insult.php?lang=en&type=json
+      source:
+        method: GET
+        params:
+          - lang: ru
+          - type: json
+        target: https://evilinsult.com/generate_insult.php?type=json&lang=en&_=1650732263311
       id: 
         save: true
         field: number
@@ -26,7 +36,11 @@ joker:
 
     jokeapi_single:
       name: jokeapi_single
-      target: https://v2.jokeapi.dev/joke/Any?type=single   
+      source:
+        method: GET
+        params:
+          - type: single
+        target: https://v2.jokeapi.dev/joke/Any?type=single   
       id: 
         save: true
         field: id
@@ -40,7 +54,11 @@ joker:
 
     jokeapi_twopart:
       name: jokeapi_twopart
-      target: https://v2.jokeapi.dev/joke/Any?type=twopart
+      source:
+        method: GET
+        params:
+          - type: twopart
+        target: https://v2.jokeapi.dev/joke/Any?type=twopart
       id: 
         save: true
         field: id
@@ -51,4 +69,20 @@ joker:
       lang:      
         source: en
         target: ru 
+        translate: true
+
+    chucknorris:
+      name: chucknorris
+      source:
+        method: GET
+        target: https://api.chucknorris.io/jokes/random
+      id:
+        save: true
+        field: id
+        type: str
+      read:
+        - value
+      lang:
+        source: en
+        target: ru  
         translate: true
