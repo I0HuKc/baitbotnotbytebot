@@ -1,6 +1,7 @@
 package baitbot
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -24,6 +25,19 @@ var helpInfo string = `
 /gd -id <recordid> — получить статус (for Admins).
 /help — получить эту инструкцию.
 `
+
+func (b *baitbot) isNewJoke(ctx context.Context, joke string) (string, error) {
+	hash, err := b.joker.GetJokeHash(joke)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := b.redis.Get(ctx, string(hash)); err != nil {
+		return string(hash), nil
+	}
+
+	return "", nil
+}
 
 func (b *baitbot) formatJoke(joke *model.Joke) string {
 	if joke.Delivery != "" {

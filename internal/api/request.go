@@ -12,6 +12,7 @@ type ReqEffector func(ctx context.Context) (map[string]interface{}, error)
 
 type request struct {
 	target string
+	params map[string]string
 	body   map[string]interface{}
 	resp   map[string]interface{}
 }
@@ -19,6 +20,7 @@ type request struct {
 type ApiReq interface {
 	MakeGetReq(ctx context.Context) (map[string]interface{}, error)
 	Repeater(effector ReqEffector, retries int, delay time.Duration) ReqEffector
+	AddHeader(key, vlue string)
 }
 
 func CreateApiReq(t string, b map[string]interface{}) ApiReq {
@@ -26,6 +28,10 @@ func CreateApiReq(t string, b map[string]interface{}) ApiReq {
 		target: t,
 		body:   b,
 	}
+}
+
+func (req *request) AddHeader(key, value string) {
+	req.params[key] = value
 }
 
 func (req *request) Repeater(effector ReqEffector, retries int, delay time.Duration) ReqEffector {

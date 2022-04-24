@@ -62,24 +62,36 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 				case <-b.antre:
 					return
 				default:
-					fmt.Println(1)
+					// other stuff
 				}
 
 				joke, err := b.joker.Joke(ctx)
 				if err != nil {
 					b.AdminNotify(err.Error())
+					continue
 				}
 
 				jtext := b.formatJoke(joke)
+				hash, err := b.isNewJoke(ctx, jtext)
+				if err != nil {
+					continue
+				}
+
+				if err := b.redis.Save(ctx, hash, joke.Target, (24*time.Hour)*30); err != nil {
+					b.AdminNotify(err.Error())
+					continue
+				}
+
 				if joke.Lang.Translate {
 					jtext, err = gt.Translate(jtext, joke.Lang.Source, joke.Lang.Target)
 					if err != nil {
 						b.AdminNotify(err.Error())
+						continue
 					}
 				}
 
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.messageEscapeFormat(jtext))
-				msg.ParseMode = "MarkdownV2"
+				msg.ParseMode = tgbotapi.ModeMarkdownV2
 				b.Send(b.botApi.Send, msg)
 
 				interval := rand.Intn(5-1+1) + 1
@@ -87,7 +99,7 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 				if !b.IsLocal() {
 					b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dч*", interval))
 					time.Sleep(time.Duration(interval) * time.Hour)
-					return
+					continue
 				}
 
 				b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dc*", interval))
@@ -102,22 +114,37 @@ func (b *baitbot) GroupCmdHandler(ctx context.Context, update tgbotapi.Update) e
 		/joke
 	*/
 	case core.CommandJoke.GetName():
-		joke, err := b.joker.Joke(ctx)
-		if err != nil {
-			return err
-		}
-
-		jtext := b.formatJoke(joke)
-		if joke.Lang.Translate {
-			jtext, err = gt.Translate(jtext, joke.Lang.Source, joke.Lang.Target)
+		for {
+			joke, err := b.joker.Joke(ctx)
 			if err != nil {
-				return err
+				b.AdminNotify(err.Error())
+				continue
 			}
-		}
 
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.messageEscapeFormat(jtext))
-		msg.ParseMode = "MarkdownV2"
-		return b.Send(b.botApi.Send, msg)
+			jtext := b.formatJoke(joke)
+			hash, err := b.isNewJoke(ctx, jtext)
+			if err != nil {
+				continue
+			}
+
+			if err := b.redis.Save(ctx, hash, joke.Target, (24*time.Hour)*30); err != nil {
+				b.AdminNotify(err.Error())
+				continue
+			}
+
+			if joke.Lang.Translate {
+				jtext, err = gt.Translate(jtext, joke.Lang.Source, joke.Lang.Target)
+				if err != nil {
+					b.AdminNotify(err.Error())
+					continue
+				}
+			}
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, b.messageEscapeFormat(jtext))
+			msg.ParseMode = tgbotapi.ModeMarkdownV2
+			return b.Send(b.botApi.Send, msg)
+
+		}
 
 	/*
 		/ping

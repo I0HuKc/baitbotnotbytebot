@@ -1,10 +1,13 @@
 package joker
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
+
+var _ Schema = (*JSchema)(nil)
 
 type JSchema struct {
 	Joker sJoker `yaml:"joker"`
@@ -12,7 +15,7 @@ type JSchema struct {
 
 type Schema interface {
 	ParseSchema(path string) error
-	GetTarget(target string) sTarget
+	PrepareUrlParams(p []map[any]any) string
 }
 
 type sJoker struct {
@@ -20,17 +23,17 @@ type sJoker struct {
 }
 
 type sTarget struct {
-	Name   string    `yaml:"name"`
-	Target string    `yaml:"target"`
-	Id     sTargetId `yaml:"id"`
-	Read   []string  `yaml:"read"`
-	Lang   sLang     `yaml:"lang"`
+	Name   string        `yaml:"name"`
+	Source sTargetSource `yaml:"source"`
+	Id     string        `yaml:"id"`
+	Read   []string      `yaml:"read"`
+	Lang   sLang         `yaml:"lang"`
 }
 
-type sTargetId struct {
-	Save  bool   `yaml:"save"`
-	Field string `yaml:"field"`
-	Type  string `yaml:"type"`
+type sTargetSource struct {
+	Method string        `yaml:"method"`
+	Params []map[any]any `yaml:"params"`
+	Target string        `yaml:"target"`
 }
 
 type sLang struct {
@@ -39,8 +42,20 @@ type sLang struct {
 	Translate bool   `yaml:"translate"`
 }
 
-func (js *JSchema) GetTarget(target string) sTarget {
-	return js.Joker.Targets[target]
+func (js *JSchema) PrepareUrlParams(p []map[any]any) string {
+	var params string
+	for k, v := range p {
+		for keyName, keyValue := range v {
+			if k < 1 {
+				params = fmt.Sprintf("?%s=%s", keyName.(string), keyValue.(string))
+				continue
+			}
+
+			params += fmt.Sprintf("&%s=%s", keyName.(string), keyValue.(string))
+		}
+	}
+
+	return params
 }
 
 func (js *JSchema) ParseSchema(path string) error {
@@ -49,5 +64,17 @@ func (js *JSchema) ParseSchema(path string) error {
 		return err
 	}
 
-	return yaml.Unmarshal(yfile, js)
+	if err := yaml.Unmarshal(yfile, js); err != nil {
+		return err
+	}
+
+	// Сохраняю названия целей
+	for k := range js.Joker.Targets {
+		if entry, ok := js.Joker.Targets[k]; ok {
+			entry.Name = k
+			js.Joker.Targets[k] = entry
+		}
+	}
+
+	return nil
 }
