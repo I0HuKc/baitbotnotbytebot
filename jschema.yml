@@ -1,68 +1,52 @@
 joker: 
   targets:
-    evilinsult_ru: 
-      name: evilinsult_ru
+    evilinsult_ru:      
       source:
         method: GET
         params:
           - lang: ru
           - type: json          
-        target: https://evilinsult.com/generate_insult.php?lang=ru&type=json
-      id: 
-        save: false
-        field: number
-        type: str
+        target: https://evilinsult.com/generate_insult.php
+      id: number 
       read: 
         - insult
       lang:       
         translate: false
 
-    evilinsult_en: 
-      name: evilinsult_en
+    evilinsult_en:      
       source:
         method: GET
         params:
-          - lang: ru
           - type: json
-        target: https://evilinsult.com/generate_insult.php?type=json&lang=en&_=1650732263311
-      id: 
-        save: true
-        field: number
-        type: str
+          - lang: ru         
+        target: https://evilinsult.com/generate_insult.php
+      id: number     
       read: 
         - insult
       lang:       
         translate: true
 
-    jokeapi_single:
-      name: jokeapi_single
+    jokeapi_single:      
       source:
         method: GET
         params:
           - type: single
-        target: https://v2.jokeapi.dev/joke/Any?type=single   
-      id: 
-        save: true
-        field: id
-        type: int
+        target: https://v2.jokeapi.dev/joke/Any  
+      id: id  
       read: 
         - joke
       lang:      
         source: en
-        target: ru 
+        target: ru
         translate: true
 
-    jokeapi_twopart:
-      name: jokeapi_twopart
+    jokeapi_twopart:     
       source:
         method: GET
         params:
           - type: twopart
-        target: https://v2.jokeapi.dev/joke/Any?type=twopart
-      id: 
-        save: true
-        field: id
-        type: int  
+        target: https://v2.jokeapi.dev/joke/Any
+      id: id    
       read:
         - setup
         - delivery
@@ -71,15 +55,11 @@ joker:
         target: ru 
         translate: true
 
-    chucknorris:
-      name: chucknorris
+    chucknorris:      
       source:
         method: GET
         target: https://api.chucknorris.io/jokes/random
-      id:
-        save: true
-        field: id
-        type: str
+      id: id   
       read:
         - value
       lang:
