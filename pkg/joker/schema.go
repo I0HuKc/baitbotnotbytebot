@@ -42,6 +42,8 @@ type sLang struct {
 	Translate bool   `yaml:"translate"`
 }
 
+// Метод для создания строки http параметров
+// из указанных в схеме
 func (js *JSchema) PrepareUrlParams(p []map[any]any) string {
 	var params string
 	for k, v := range p {
@@ -58,6 +60,7 @@ func (js *JSchema) PrepareUrlParams(p []map[any]any) string {
 	return params
 }
 
+// Парсинг схемы джокера
 func (js *JSchema) ParseSchema(path string) error {
 	yfile, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -68,7 +71,7 @@ func (js *JSchema) ParseSchema(path string) error {
 		return err
 	}
 
-	// Сохраняю названия целей
+	// Сохранение названия целей
 	for k := range js.Joker.Targets {
 		if entry, ok := js.Joker.Targets[k]; ok {
 			entry.Name = k

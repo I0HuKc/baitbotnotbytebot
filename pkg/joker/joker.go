@@ -8,14 +8,12 @@ import (
 	"time"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/api"
-	"github.com/I0HuKc/baitbotnotbytebot/internal/db/rdstore"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type joker struct {
 	schema JSchema
-	redis  rdstore.RedisStore
 }
 
 type Joker interface {
@@ -23,19 +21,22 @@ type Joker interface {
 	Joke(ctx context.Context) (*model.Joke, error)
 }
 
-func CallJoker(s JSchema, r rdstore.RedisStore) Joker {
+func CallJoker(s JSchema) Joker {
 	return &joker{
 		schema: s,
-		redis:  r,
 	}
 }
 
 func (j *joker) Joke(ctx context.Context) (*model.Joke, error) {
 	rt := j.getRandomTarget()
-	fmt.Println(rt.Name)
-	req := api.CreateApiReq(rt.Source.Target+j.schema.PrepareUrlParams(rt.Source.Params), nil)
 
-	resp, err := req.Repeater(req.MakeGetReq, 3, time.Second)(ctx)
+	req := api.CreateApiReq[any, map[string]any](
+		(rt.Source.Target + j.schema.PrepareUrlParams(rt.Source.Params)),
+		nil,
+		5*time.Second,
+	)
+
+	resp, err := req.Repeater(req.NewRequest, 3, time.Second)(ctx, rt.Source.Method)
 	if err != nil {
 		return nil, err
 	}

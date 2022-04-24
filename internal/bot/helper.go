@@ -2,29 +2,15 @@ package baitbot
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
-
-var helpInfo string = `
-/start — перезапуск бота (локальный).
-
-*Групповые команды*
-/scd — старт процесса смены описания
-/bll — начать буллить человека
-/cd — принудительное изменение статуса в группе
-
-*Приватные команды*
-/ad -v <value> — добавить статус (for Authors)
-/gd -id <recordid> — получить статус (for Admins).
-/help — получить эту инструкцию.
-`
 
 func (b *baitbot) isNewJoke(ctx context.Context, joke string) (string, error) {
 	hash, err := b.joker.GetJokeHash(joke)
@@ -71,7 +57,7 @@ func (b *baitbot) messageEscapeFormat(str string) string {
 }
 
 func (b *baitbot) IsLocal() bool {
-	if os.Getenv("APP_ENV") == "local" {
+	if os.Getenv("APP_ENV") == core.LocalEnv {
 		return true
 	}
 
@@ -95,46 +81,6 @@ func (b *baitbot) AdminNotify(about string) error {
 	msg := tgbotapi.NewMessage(int64(id), about)
 	msg.ParseMode = tgbotapi.ModeMarkdown
 	return b.Send(b.botApi.Send, msg)
-}
-
-func (b *baitbot) IsAuthor(update tgbotapi.Update) (bool, error) {
-	for _, v := range strings.Split(os.Getenv("APP_BOT_AUTHOR"), ",") {
-		id, err := strconv.Atoi(v)
-		if err != nil {
-			return false, err
-		}
-
-		if update.Message.From.ID == int64(id) {
-			return true, nil
-		}
-	}
-
-	return false, errors.New("попытка доступа к защищенному ресурсу")
-}
-
-// Проверка на админа
-func (b *baitbot) IsAdmin(update tgbotapi.Update) (bool, error) {
-	id, err := strconv.Atoi(os.Getenv("APP_BOT_ADMID_ID"))
-	if err != nil {
-		return false, b.AdminNotify(
-			fmt.Sprintf(
-				"[%s] — попытка доступа к защищенным командам!\n[error]: %s",
-				update.Message.Chat.UserName,
-				err.Error(),
-			),
-		)
-	}
-
-	if update.Message.From.ID == int64(id) {
-		return true, nil
-	}
-
-	return false, b.AdminNotify(
-		fmt.Sprintf(
-			"[%s] — попытка доступа к защищенным командам!",
-			update.Message.Chat.UserName,
-		),
-	)
 }
 
 // Верезать из сообщения только значение флага

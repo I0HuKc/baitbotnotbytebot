@@ -43,16 +43,16 @@ var runCmd = &cobra.Command{
 		}
 		defer rclient.Close()
 
-		rstore := rdstore.CreateRedisStore(rclient)
-
 		var js joker.JSchema
 		if err := js.ParseSchema(os.Getenv("JOKER_SCHEMA_PATH")); err != nil {
 			log.Panic(err)
 		}
 
-		baitbot := bb.CreateBaitbot(botApi, sqlstore.CreateSqlStore(pg),
-			rstore, joker.CallJoker(js, rstore))
-		if err := baitbot.Serve(ctx); err != nil {
+		bot := bb.CreateBaitbot(botApi, sqlstore.CreateSqlStore(pg),
+			rdstore.CreateRedisStore(rclient), joker.CallJoker(js),
+		)
+
+		if err := bot.SetHub().Serve(ctx); err != nil {
 			log.Println(err)
 		}
 	},

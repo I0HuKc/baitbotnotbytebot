@@ -2,8 +2,7 @@ package baitbot
 
 import (
 	"context"
-	"fmt"
-	"log"
+	"unicode"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
@@ -14,12 +13,12 @@ import (
 
 type baitbot struct {
 	botApi *tgbotapi.BotAPI
+	hub    core.Hub
 	store  db.SqlStore
 	redis  rdstore.RedisStore
 	joker  joker.Joker
 
-	antre chan bool
-	scd   chan bool
+	scd chan bool
 }
 
 func (b *baitbot) Serve(ctx context.Context) (err error) {
@@ -32,27 +31,11 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 	}
 
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
-
-		if update.Message.Chat.IsGroup() || update.Message.Chat.IsSuperGroup() {
+		if update.Message != nil {
 			if update.Message.IsCommand() {
-				if b.IsLocal() {
-					log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-				}
-
-				b.ErrorHandler(ctx, b.GroupCmdHandler, update)
-			}
-		}
-
-		if update.Message.Chat.IsPrivate() {
-			if b.IsLocal() {
-				log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-			}
-
-			if update.Message.IsCommand() {
-				b.ErrorHandler(ctx, b.PrivateCmdHandler, update)
+				go func() {
+					b.ResponseHandler(update, b.hub.HandleFunc(ctx, update))
+				}()
 			}
 		}
 	}
@@ -60,18 +43,32 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 	return nil
 }
 
-func (b *baitbot) ErrorHandler(ctx context.Context, handler core.Handler, update tgbotapi.Update) {
-	if err := handler(ctx, update); err != nil {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "⚠️ Похоже что-то пошло не так ⚠️ ")
-		b.botApi.Send(msg)
+func (b *baitbot) SetHub() core.Baitbot {
+	// Private commands
+	b.hub.SetHandleFunc(CommandStart, b.OnlyPrivateChat, b.CommandStartHandle)
+	b.hub.SetHandleFunc(CommandGetDecription, b.OnlyPrivateChat, b.OnlyForAdmin, b.CommandGetDescHandle)
+	b.hub.SetHandleFunc(CommandAddDecription, b.OnlyPrivateChat, b.OnlyForAuthor, b.CommandAddDescHandle)
+	b.hub.SetHandleFunc(CommandGetDescriptionList, b.OnlyPrivateChat, b.OnlyForAdmin, b.CommandGetDescListHandle)
+	b.hub.SetHandleFunc(CommandHelp, b.OnlyPrivateChat, b.CommandHelpDescHandle)
 
-		fmt.Println(ctx.Err() != context.Canceled)
-		if ctx.Err() != context.Canceled {
-			ab := fmt.Sprintf("🔄[%s] — %s🔄", update.Message.Chat.UserName, err.Error())
-			if err := b.AdminNotify(ab); err != nil {
-				log.Println(err)
-			}
-		}
+	// Group commands
+	b.hub.SetHandleFunc(CommandAntre, b.OnlyGroupChat, b.OnlyForAdmin, b.NoRunPerformance, b.SaveAntre, b.CommandAntreHandle)
+	b.hub.SetHandleFunc(CommandStopAntre, b.OnlyGroupChat, b.OnlyForAdmin, b.RunPerformance, b.CommandStopAntreHandle)
+	b.hub.SetHandleFunc(CommandJoke, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandJokeHandle)
+	b.hub.SetHandleFunc(CommandPing, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandPingHandle)
+	b.hub.SetHandleFunc(CommandStartChangeDecription, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandStartChangeDescHandle)
+
+	return b
+}
+
+func (b *baitbot) ResponseHandler(update tgbotapi.Update, err error) {
+	if err != nil {
+		r := []rune(err.Error())
+		r[0] = unicode.ToUpper(r[0])
+
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(r))
+		b.botApi.Send(msg)
+		return
 	}
 }
 
@@ -81,5 +78,7 @@ func CreateBaitbot(b *tgbotapi.BotAPI, s db.SqlStore, r rdstore.RedisStore, j jo
 		store:  s,
 		redis:  r,
 		joker:  j,
+
+		hub: make(hub),
 	}
 }
