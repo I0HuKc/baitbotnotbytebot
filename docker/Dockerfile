@@ -1,12 +1,13 @@
-FROM golang:1.18-alpine
+FROM golang:1.18 as builder
+
 
 RUN mkdir -p /go/src/app
-
 WORKDIR /go/src/app
-
 COPY . /go/src/app
-
 RUN go mod download
-RUN go build -o app main.go
+RUN CGO_ENABLED=0 go build -o app
 
-ENTRYPOINT [ "/go/src/app/app" ]
+
+FROM alpine:3.15
+COPY --from=builder /go/src/app /
+ENTRYPOINT [ "/app" ]
