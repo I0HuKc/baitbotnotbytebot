@@ -1,7 +1,3 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
@@ -18,7 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "r",
@@ -52,7 +47,7 @@ var runCmd = &cobra.Command{
 			rdstore.CreateRedisStore(rclient), joker.CallJoker(js),
 		)
 
-		if err := bot.SetHub().Serve(ctx); err != nil {
+		if err := bot.SetHub().Cron(ctx).Serve(ctx); err != nil {
 			log.Println(err)
 		}
 	},
