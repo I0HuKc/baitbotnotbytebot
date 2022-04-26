@@ -84,9 +84,11 @@ func (b *baitbot) NoRunPerformance(ctx context.Context, update tgbotapi.Update) 
 func (b *baitbot) RunPerformance(ctx context.Context, update tgbotapi.Update) error {
 	if err := b.store.Performance().GetByGroupId(ctx,
 		&model.Performance{GroupId: int(update.Message.Chat.ID)}); err != nil {
-		if err != sql.ErrNoRows {
-			return err
+		if err == sql.ErrNoRows {
+			return ErrNoAntreCreated
 		}
+
+		return err
 	}
 
 	return nil

@@ -4,7 +4,7 @@ package baitbot
 var (
 	CommandStart              = CreateCommand("start")
 	CommandHelp               = CreateCommand("help")
-	CommandAddDecription      = CreateCommand("ad")
+	CommandAddDecription      = CreateCommand("ad", "-v")
 	CommandGetDecription      = CreateCommand("gd")
 	CommandGetDescriptionList = CreateCommand("gdl")
 

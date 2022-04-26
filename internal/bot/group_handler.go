@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
 	gt "github.com/bas24/googletranslatefree"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -24,6 +25,16 @@ func (b *baitbot) CommandAntreHandle(ctx context.Context, update tgbotapi.Update
 				b.AdminNotify(err.Error())
 				break
 			}
+		}
+
+		// Проверка времени
+		t, err := time.Parse(time.RFC3339, pf.NextJoke)
+		if err != nil {
+			break
+		}
+
+		if t.After(time.Now()) {
+			continue
 		}
 
 		joke, err := b.joker.Joke(ctx)
@@ -55,29 +66,17 @@ func (b *baitbot) CommandAntreHandle(ctx context.Context, update tgbotapi.Update
 		msg.ParseMode = tgbotapi.ModeMarkdownV2
 		b.Send(b.botApi.Send, msg)
 
-		itr := rand.Intn(5-1+1) + 1
+		itr := int(float32(10 * rand.Float32()))
 		nt := time.Now().UTC()
 
-		fmt.Println(nt.Format("2006-01-02T15:04:05.00000000"))
-
-		if !b.IsLocal() {
-			pf.NextJoke = nt.Add(time.Hour * time.Duration(itr)).Format("2006-01-02T15:04:05.00000000")
-			if err := b.store.Performance().Update(ctx, &pf); err != nil {
-				return err
-			}
-
-			b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dч*", itr))
-			time.Sleep(time.Duration(itr) * time.Hour)
-			continue
-		}
-
-		pf.NextJoke = nt.Add(time.Second * time.Duration(itr)).Format("2006-01-02T15:04:05.00000000")
+		pf.NextJoke = nt.Add(core.GetInterval() * time.Duration(itr)).Format("2006-01-02T15:04:05.00000000")
 		if err := b.store.Performance().Update(ctx, &pf); err != nil {
 			return err
 		}
 
-		b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dc*", itr))
-		time.Sleep(time.Duration(itr) * time.Second)
+		b.AdminNotify(fmt.Sprintf("Сделующая шутка через *%dч*", itr))
+		time.Sleep(time.Duration(itr) * core.GetInterval())
+		continue
 	}
 
 	return nil
@@ -188,16 +187,10 @@ func (b *baitbot) CommandStartChangeDescHandle(ctx context.Context, update tgbot
 		}
 
 		// Рандомный интервал через который будет установлен новый статус
-		interval := rand.Intn(48-24+24) + 24
+		itr := int(float32(48 * rand.Float32()))
 
-		if !b.IsLocal() {
-			b.AdminNotify(fmt.Sprintf("Сделующая смена статуса через *%dч*", interval))
-			time.Sleep(time.Duration(interval) * time.Hour)
-			continue
-		}
-
-		b.AdminNotify(fmt.Sprintf("Сделующая смена статуса через *%dc*", interval))
-		time.Sleep(time.Duration(interval) * time.Second)
+		b.AdminNotify(fmt.Sprintf("Сделующая смена статуса через *%dч*", itr))
+		time.Sleep(time.Duration(itr) * core.GetInterval())
 	}
 
 	return nil

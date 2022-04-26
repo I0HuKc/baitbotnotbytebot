@@ -14,6 +14,16 @@ func (h hub) SetHandleFunc(cmd core.Command, handler ...core.Handler) {
 	h[cmd] = handler
 }
 
+func (h hub) GetCommand(update tgbotapi.Update) core.Command {
+	for cmd := range h {
+		if cmd.IsThisCommand(update.Message.Command()) {
+			return cmd
+		}
+	}
+
+	return nil
+}
+
 func (h hub) IsExistingCommand(update tgbotapi.Update) ([]core.Handler, bool) {
 	for cmd, handlers := range h {
 		if cmd.IsThisCommand(update.Message.Command()) {

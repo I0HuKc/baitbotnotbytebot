@@ -2,6 +2,7 @@ package baitbot
 
 import (
 	"context"
+	"fmt"
 	"unicode"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
@@ -17,8 +18,6 @@ type baitbot struct {
 	store  db.SqlStore
 	redis  rdstore.RedisStore
 	joker  joker.Joker
-
-	scd chan bool
 }
 
 func (b *baitbot) Serve(ctx context.Context) (err error) {
@@ -43,6 +42,31 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 	return nil
 }
 
+func (b *baitbot) Cron(ctx context.Context) core.Baitbot {
+	// Проверка, нет ли ранее запущенных представлений для джокера
+	perf, err := b.store.Performance().List(ctx)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, pf := range perf {
+		update := tgbotapi.Update{
+			Message: &tgbotapi.Message{
+				Chat: &tgbotapi.Chat{
+					ID: int64(pf.GroupId),
+				},
+				Text: "/antre",
+			},
+		}
+
+		go func() {
+			b.ResponseHandler(update, b.CommandAntreHandle(ctx, update))
+		}()
+	}
+
+	return b
+}
+
 func (b *baitbot) SetHub() core.Baitbot {
 	// Private commands
 	b.hub.SetHandleFunc(CommandStart, b.OnlyPrivateChat, b.CommandStartHandle)
@@ -54,7 +78,7 @@ func (b *baitbot) SetHub() core.Baitbot {
 	// Group commands
 	b.hub.SetHandleFunc(CommandAntre, b.OnlyGroupChat, b.OnlyForAdmin, b.NoRunPerformance, b.SaveAntre, b.CommandAntreHandle)
 	b.hub.SetHandleFunc(CommandStopAntre, b.OnlyGroupChat, b.OnlyForAdmin, b.RunPerformance, b.CommandStopAntreHandle)
-	b.hub.SetHandleFunc(CommandJoke, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandJokeHandle)
+	b.hub.SetHandleFunc(CommandJoke, b.OnlyGroupChat, b.CommandJokeHandle)
 	b.hub.SetHandleFunc(CommandPing, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandPingHandle)
 	b.hub.SetHandleFunc(CommandStartChangeDecription, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandStartChangeDescHandle)
 
@@ -68,7 +92,6 @@ func (b *baitbot) ResponseHandler(update tgbotapi.Update, err error) {
 
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, string(r))
 		b.botApi.Send(msg)
-		return
 	}
 }
 

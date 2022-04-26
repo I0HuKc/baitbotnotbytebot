@@ -48,12 +48,12 @@ Command: /ad
 Private: true;
 */
 func (b *baitbot) CommandAddDescHandle(ctx context.Context, update tgbotapi.Update) error {
-	if msg, err := b.CommandFlagValidation(update); err != nil {
-		return b.Send(b.botApi.Send, msg)
-	}
+	// if msg, err := b.CommandFlagValidation(update); err != nil {
+	// 	return b.Send(b.botApi.Send, msg)
+	// }
 
 	if err := b.store.Desc().Create(ctx, &model.Desc{
-		Text: b.TrimFlagCommandValue("-v", update.Message.Text),
+		Text: b.hub.GetCommand(update).ReadFlag(update.Message.Text)["-v"],
 	}); err != nil {
 		return err
 	}
