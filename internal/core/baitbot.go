@@ -11,7 +11,6 @@ type HandlerFunc func(ctx context.Context, update tgbotapi.Update, h ...Handler)
 
 type Baitbot interface {
 	Serve(ctx context.Context) (err error)
-	Cron(ctx context.Context) Baitbot
 	Fuse() Baitbot
 }
 

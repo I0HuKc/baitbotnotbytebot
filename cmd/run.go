@@ -47,7 +47,7 @@ var runCmd = &cobra.Command{
 			rdstore.CreateRedisStore(rclient), joker.CallJoker(js),
 		)
 
-		if err := bot.SetHub().Cron(ctx).Serve(ctx); err != nil {
+		if err := bot.Fuse().Serve(ctx); err != nil {
 			log.Println(err)
 		}
 	},

@@ -34,7 +34,7 @@ func (h hub) IsExistingCommand(update tgbotapi.Update) ([]core.Handler, bool) {
 	return nil, false
 }
 
-func (h hub) HandleFunc(ctx context.Context, update tgbotapi.Update) error {
+func (h hub) Handle(ctx context.Context, update tgbotapi.Update) error {
 	if arr, ok := h.IsExistingCommand(update); ok {
 		for _, handler := range arr {
 			if err := handler(ctx, update); err != nil {

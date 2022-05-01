@@ -2,13 +2,10 @@ package baitbot
 
 import (
 	"context"
-	"database/sql"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -62,49 +59,4 @@ func (b *baitbot) OnlyForAuthor(ctx context.Context, update tgbotapi.Update) err
 	}
 
 	return ErrNotAvailableFoYou
-}
-
-// Пропускает к след обработчикам, только если
-// антре еще НЕ создана для этой группы.
-func (b *baitbot) NoRunPerformance(ctx context.Context, update tgbotapi.Update) error {
-	if err := b.store.Performance().GetByGroupId(ctx,
-		&model.Performance{GroupId: int(update.Message.Chat.ID)}); err != nil {
-		if err != sql.ErrNoRows {
-			return err
-		}
-
-		return nil
-	}
-
-	return ErrAlreadyCreated
-}
-
-// Пропускает к след обработчикам, только если
-// антре уже создана для этой группы.
-func (b *baitbot) RunPerformance(ctx context.Context, update tgbotapi.Update) error {
-	if err := b.store.Performance().GetByGroupId(ctx,
-		&model.Performance{GroupId: int(update.Message.Chat.ID)}); err != nil {
-		if err == sql.ErrNoRows {
-			return ErrNoAntreCreated
-		}
-
-		return err
-	}
-
-	return nil
-}
-
-// Предварительное сохранение данных
-// перед запуском антре
-func (b *baitbot) SaveAntre(ctx context.Context, update tgbotapi.Update) error {
-	if err := b.store.Performance().Create(ctx, &model.Performance{
-		GroupId:   int(update.Message.Chat.ID),
-		GroupName: update.Message.Chat.Title,
-		NextJoke:  time.Now().UTC().Format("2006-01-02T15:04:05.00000000"),
-	}); err != nil {
-		return err
-	}
-
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Джокер в игре!")
-	return b.Send(b.botApi.Send, msg)
 }

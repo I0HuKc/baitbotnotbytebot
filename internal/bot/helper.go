@@ -6,11 +6,27 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/model"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
+
+func (b *baitbot) NewAction(update tgbotapi.Update, act core.Action, expiration time.Duration) {
+	b.acts[update.Message.Chat.ID] = ActionSendJoke
+
+	go func() {
+		time.Sleep(expiration)
+		if _, ok := b.acts[update.Message.Chat.ID]; ok {
+			delete(b.acts, update.Message.Chat.ID)
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, fmt.Sprintf("Действие `%s` отменено.", act.GetName()))
+			msg.ParseMode = tgbotapi.ModeMarkdown
+			b.Send(b.botApi.Send, msg)
+		}
+	}()
+}
 
 func (b *baitbot) isNewJoke(ctx context.Context, joke string) (string, error) {
 	hash, err := b.joker.GetJokeHash(joke)
@@ -80,6 +96,7 @@ func (b *baitbot) AdminNotify(about string) error {
 
 	msg := tgbotapi.NewMessage(int64(id), about)
 	msg.ParseMode = tgbotapi.ModeMarkdown
+	msg.DisableNotification = true
 	return b.Send(b.botApi.Send, msg)
 }
 

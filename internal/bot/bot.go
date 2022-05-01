@@ -2,7 +2,6 @@ package baitbot
 
 import (
 	"context"
-	"fmt"
 	"unicode"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
@@ -15,9 +14,12 @@ import (
 type baitbot struct {
 	botApi *tgbotapi.BotAPI
 	hub    core.Hub
-	store  db.SqlStore
-	redis  rdstore.RedisStore
-	joker  joker.Joker
+	sked   core.Sked
+	acts   map[int64]core.Action
+
+	store db.SqlStore
+	redis rdstore.RedisStore
+	joker joker.Joker
 }
 
 func (b *baitbot) Serve(ctx context.Context) (err error) {
@@ -31,10 +33,20 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 
 	for update := range updates {
 		if update.Message != nil {
+			if b.acts[update.Message.Chat.ID] != nil {
+				go func() {
+					b.ResponseHandler(update, b.sked.Handle(ctx, update, b.acts[update.Message.Chat.ID]))
+				}()
+
+				continue
+			}
+
 			if update.Message.IsCommand() {
 				go func() {
-					b.ResponseHandler(update, b.hub.HandleFunc(ctx, update))
+					b.ResponseHandler(update, b.hub.Handle(ctx, update))
 				}()
+
+				continue
 			}
 		}
 	}
@@ -42,42 +54,19 @@ func (b *baitbot) Serve(ctx context.Context) (err error) {
 	return nil
 }
 
-func (b *baitbot) Cron(ctx context.Context) core.Baitbot {
-	// Проверка, нет ли ранее запущенных представлений для джокера
-	perf, err := b.store.Performance().List(ctx)
-	if err != nil {
-		fmt.Println(err)
-	}
+func (b *baitbot) Fuse() core.Baitbot {
+	// Actions
+	b.sked.SetHandleFunc(ActionSendJoke, b.ActionSendJokeHandle)
 
-	for _, pf := range perf {
-		update := tgbotapi.Update{
-			Message: &tgbotapi.Message{
-				Chat: &tgbotapi.Chat{
-					ID: int64(pf.GroupId),
-				},
-				Text: "/antre",
-			},
-		}
-
-		go func() {
-			b.ResponseHandler(update, b.CommandAntreHandle(ctx, update))
-		}()
-	}
-
-	return b
-}
-
-func (b *baitbot) SetHub() core.Baitbot {
 	// Private commands
 	b.hub.SetHandleFunc(CommandStart, b.OnlyPrivateChat, b.CommandStartHandle)
 	b.hub.SetHandleFunc(CommandGetDecription, b.OnlyPrivateChat, b.OnlyForAdmin, b.CommandGetDescHandle)
 	b.hub.SetHandleFunc(CommandAddDecription, b.OnlyPrivateChat, b.OnlyForAuthor, b.CommandAddDescHandle)
 	b.hub.SetHandleFunc(CommandGetDescriptionList, b.OnlyPrivateChat, b.OnlyForAdmin, b.CommandGetDescListHandle)
-	b.hub.SetHandleFunc(CommandHelp, b.OnlyPrivateChat, b.CommandHelpDescHandle)
+	b.hub.SetHandleFunc(CommandSendJoke, b.OnlyPrivateChat, b.OnlyForAdmin, b.CommandSendJokeHandle)
+	b.hub.SetHandleFunc(CommandAntre, b.OnlyPrivateChat, b.OnlyForAdmin, b.CommandAntreHandle)
 
 	// Group commands
-	b.hub.SetHandleFunc(CommandAntre, b.OnlyGroupChat, b.OnlyForAdmin, b.NoRunPerformance, b.SaveAntre, b.CommandAntreHandle)
-	b.hub.SetHandleFunc(CommandStopAntre, b.OnlyGroupChat, b.OnlyForAdmin, b.RunPerformance, b.CommandStopAntreHandle)
 	b.hub.SetHandleFunc(CommandJoke, b.OnlyGroupChat, b.CommandJokeHandle)
 	b.hub.SetHandleFunc(CommandPing, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandPingHandle)
 	b.hub.SetHandleFunc(CommandStartChangeDecription, b.OnlyGroupChat, b.OnlyForAdmin, b.CommandStartChangeDescHandle)
@@ -102,6 +91,8 @@ func CreateBaitbot(b *tgbotapi.BotAPI, s db.SqlStore, r rdstore.RedisStore, j jo
 		redis:  r,
 		joker:  j,
 
-		hub: make(hub),
+		hub:  make(hub),
+		sked: make(sked),
+		acts: make(map[int64]core.Action),
 	}
 }
