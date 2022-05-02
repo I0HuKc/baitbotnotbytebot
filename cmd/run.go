@@ -19,6 +19,7 @@ var runCmd = &cobra.Command{
 	Short: "r",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
+		// dev
 		ctx := context.Background()
 
 		botApi, err := tgbotapi.NewBotAPI(os.Getenv("APP_BOT_TOKEN"))
