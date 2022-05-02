@@ -9,7 +9,6 @@ services:
     env_file:
         - ../.env
     depends_on:
-      # - baitbotmigrate
       - bndredis
     restart: unless-stopped
 
@@ -21,56 +20,16 @@ services:
       - redis:/var/lib/redis
     restart: unless-stopped
 
-  baitbotdb:
-    image: postgres:14.1-alpine
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "pg_isready",
-          "-q",
-          "-d",
-          "postgres",
-          "-U",
-          "root"
-        ]
-      timeout: 20s
-      interval: 10s
-      retries: 3
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=password
-      - APP_DB_USER=bait
-      - APP_DB_PASS=qwerty
-      - APP_DB_NAME=baitdb
-    logging:
-      options:
-        max-size: 10m
-        max-file: "3"
+  memcached:
+    image: 'bitnami/memcached:latest'
     ports:
-      - '5432:5432'
-    volumes:
-      - ../tools:/docker-entrypoint-initdb.d/
-      - tools:/var/lib/postgresql/data
-    restart: unless-stopped
-
-  # baitbotmigrate:
-  #   image: migrate/migrate
-  #   volumes:
-  #     - ../migrations:/migrations
-  #   command:
-  #     [
-  #       "-path",
-  #       "/migrations",
-  #       "-database",
-  #       "postgres://bait:qwerty@baitbotdb:5432/baitdb?sslmode=disable",
-  #       "up"
-  #     ]
-  #   links:
-  #     - baitbotdb
-  #   depends_on:
-  #     - baitbotdb
-  #   restart: on-failure
+      - '11211:11211'
+    environment:
+      - MEMCACHED_MAX_ITEM_SIZE=8388608
+      - MEMCACHED_MAX_CONNECTIONS=2000
+      - MEMCACHED_THREADS=4
+    networks:
+      - default
 
 volumes:
   redis:
