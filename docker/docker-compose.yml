@@ -30,6 +30,7 @@ services:
       - MEMCACHED_THREADS=4
     networks:
       - default
+    restart: unless-stopped
 
 volumes:
   redis:
