@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/I0HuKc/baitbotnotbytebot/internal/bot"
 	"github.com/I0HuKc/baitbotnotbytebot/internal/db"
@@ -19,12 +20,14 @@ var runCmd = &cobra.Command{
 		rclient, err := db.SetRedisConn(ctx)
 		if err != nil {
 			log.Panic(err)
+			os.Exit(1)
 		}
 		defer rclient.Close()
 
 		bot, err := bot.NewBaitbot(rclient)
 		if err != nil {
 			log.Fatal(err)
+			os.Exit(1)
 		}
 
 		bot.Configure(ctx).Serve()
