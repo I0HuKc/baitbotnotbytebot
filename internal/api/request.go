@@ -4,12 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"os"
 	"time"
-
-	"github.com/I0HuKc/baitbotnotbytebot/internal/core"
 )
 
 type ReqEffector[R any] func(ctx context.Context, method string) (R, error)
@@ -43,9 +39,9 @@ func (req *request[B, R]) Repeater(effector ReqEffector[R], retries int, delay t
 				return resp, err
 			}
 
-			if os.Getenv("APP_ENV") == core.LocalEnv {
-				fmt.Printf("Attempt %d failed; retrying in %v\n", i+1, delay)
-			}
+			// if os.Getenv("APP_ENV") == core.LocalEnv {
+			// 	fmt.Printf("Attempt %d failed; retrying in %v\n", i+1, delay)
+			// }
 
 			delay += time.Second
 
