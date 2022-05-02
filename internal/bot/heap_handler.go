@@ -16,10 +16,22 @@ func (b *baitbot) CacheForwardHandle(ctx context.Context) tele.HandlerFunc {
 		}
 
 		c.Sender().ID = int64(id)
-		if _, err := b.botApi.Send(c.Sender(), c.Text(), &tele.SendOptions{
+		so := tele.SendOptions{
 			DisableNotification: true,
-		}); err != nil {
-			return err
+		}
+
+		// Проверяю, было ли отправлено фото
+		if c.Message().Photo != nil {
+			if _, err := c.Message().Photo.Send(b.botApi, c.Sender(), &so); err != nil {
+				return err
+			}
+		}
+
+		// Проверяю, был ли указан текст
+		if len(c.Text()) > 0 {
+			if _, err := b.botApi.Send(c.Sender(), c.Text(), &so); err != nil {
+				return err
+			}
 		}
 
 		return nil

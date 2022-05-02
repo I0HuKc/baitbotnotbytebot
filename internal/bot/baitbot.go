@@ -37,7 +37,9 @@ func (b *baitbot) Configure(ctx context.Context) core.Baitbot {
 	c.Handle("/ping", b.CommandPingHandle(ctx), b.AdminOnly(ctx))
 	c.Handle("/antre", b.CommandAntreHandle(ctx), b.AdminOnly(ctx))
 	c.Handle("/forward", b.CommandForwardHandle(ctx), b.AdminOnly(ctx))
+
 	c.Handle(tele.OnText, nil)
+	c.Handle(tele.OnPhoto, nil)
 
 	b.heap.Handle(CacheForward, b.CacheForwardHandle(ctx))
 
