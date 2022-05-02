@@ -9,7 +9,7 @@ services:
     env_file:
         - ../.env
     depends_on:
-      - baitbotmigrate
+      # - baitbotmigrate
       - bndredis
     restart: unless-stopped
 
@@ -54,23 +54,23 @@ services:
       - tools:/var/lib/postgresql/data
     restart: unless-stopped
 
-  baitbotmigrate:
-    image: migrate/migrate
-    volumes:
-      - ../migrations:/migrations
-    command:
-      [
-        "-path",
-        "/migrations",
-        "-database",
-        "postgres://bait:qwerty@baitbotdb:5432/baitdb?sslmode=disable",
-        "up"
-      ]
-    links:
-      - baitbotdb
-    depends_on:
-      - baitbotdb
-    restart: on-failure
+  # baitbotmigrate:
+  #   image: migrate/migrate
+  #   volumes:
+  #     - ../migrations:/migrations
+  #   command:
+  #     [
+  #       "-path",
+  #       "/migrations",
+  #       "-database",
+  #       "postgres://bait:qwerty@baitbotdb:5432/baitdb?sslmode=disable",
+  #       "up"
+  #     ]
+  #   links:
+  #     - baitbotdb
+  #   depends_on:
+  #     - baitbotdb
+  #   restart: on-failure
 
 volumes:
   redis:
