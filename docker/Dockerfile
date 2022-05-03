@@ -11,3 +11,4 @@ RUN CGO_ENABLED=0 go build -o app
 FROM alpine:3.15
 COPY --from=builder /go/src/app /
 ENTRYPOINT [ "/app" ]
+CMD [ "run" ]
